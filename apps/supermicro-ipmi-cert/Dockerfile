@@ -13,18 +13,18 @@ RUN apk add --no-cache \
 RUN pip install --no-cache-dir \
     requests==2.31.0
 
-# Create non-root user (use existing nobody user)
-# Alpine already has nobody:nobody (65534:65534)
-RUN addgroup -g 1000 app && \
-    adduser -D -u 1000 -G app app
+# Create app directory and set permissions for nobody user (65534:65534)
+# Alpine already has nobody:nobody (65534:65534) user
+RUN mkdir -p /app && \
+    chown -R nobody:nobody /app
 
 # Copy application
 COPY supermicro_ipmi_cert.py /app/supermicro_ipmi_cert.py
 RUN chmod +x /app/supermicro_ipmi_cert.py && \
-    chown -R app:app /app
+    chown nobody:nobody /app/supermicro_ipmi_cert.py
 
-# Switch to non-root user
-USER app
+# Switch to non-root nobody user
+USER nobody
 
 WORKDIR /app
 
