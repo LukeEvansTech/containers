@@ -45,7 +45,7 @@ binary: /usr/local/bin/supermicro-ipmi-cert
 environment_variables:
   CERTIFICATE_PEM: "{{CERTIFICATE_PEM}}"
   PRIVATE_KEY_PEM: "{{PRIVATE_KEY_PEM}}"
-  IPMI_URL: "https://cr-vm-00-ipmi.core.example.com"
+  IPMI_URL: "https://ipmi-host-01.example.com"
   IPMI_MODEL: "X12"
   IPMI_USERNAME: "ADMIN"
   IPMI_PASSWORD_ENV: "IPMI_PASSWORD"  # Fetch from Kubernetes secret
