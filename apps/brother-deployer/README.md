@@ -79,3 +79,7 @@ Approximately 80-90MB
 ## License
 
 GPL-2.0
+
+## Version
+
+Current version: v0.3.0 (uses brother-cert v0.3.0)
