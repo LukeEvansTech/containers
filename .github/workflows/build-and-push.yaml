@@ -49,7 +49,7 @@ jobs:
             echo "apps=[\"${{ inputs.app }}\"]" >> $GITHUB_OUTPUT
           elif [ "${{ steps.changed-files.outputs.any_changed }}" == "true" ]; then
             # Auto-detect changed apps
-            APPS=$(echo '${{ steps.changed-files.outputs.all_changed_files }}' | jq -R -s -c 'split("\n") | map(select(length > 0)) | map(split("/")[1]) | unique')
+            APPS=$(echo '${{ steps.changed-files.outputs.all_changed_files }}' | jq -R -s -c 'split(" ") | map(select(length > 0)) | map(split("/")[1]) | unique')
             echo "apps=${APPS}" >> $GITHUB_OUTPUT
           else
             # No changes
