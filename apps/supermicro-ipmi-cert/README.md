@@ -1,15 +1,14 @@
-# Supermicro IPMI Certificate Deployment Tool
+# Supermicro IPMI Certificate Deployer
 
-A containerized tool for deploying SSL/TLS certificates to Supermicro IPMI interfaces. Designed for use with [Cert Warden](https://www.certwarden.com/) post-processing.
+Container for deploying SSL certificates to modern Supermicro IPMI interfaces using the Redfish API.
 
-## Supported Models
+## Supported Hardware
 
-- **X9** - Legacy IPMI (requires TLSv1)
-- **X10** - Legacy IPMI
-- **X11** - Legacy IPMI
-- **X12** - Redfish API
-- **X13** - Redfish API
-- **H13** - Redfish API (treated as X12)
+- **X12** motherboards with Redfish API
+- **X13** motherboards with Redfish API
+- **H13** motherboards with Redfish API
+
+**Note**: This version only supports modern Supermicro boards with Redfish API. Legacy X9/X10/X11 support has been removed for simplicity.
 
 ## Usage with Cert Warden
 
