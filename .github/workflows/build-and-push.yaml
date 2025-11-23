@@ -91,7 +91,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Read VERSION file
+      - name: Read VERSION file and prepare build args
         id: version
         run: |
           if [ -f "apps/${{ matrix.app }}/VERSION" ]; then
@@ -99,8 +99,15 @@ jobs:
             echo "version=$VERSION" >> $GITHUB_OUTPUT
             echo "has_version=true" >> $GITHUB_OUTPUT
             echo "Found VERSION file with version: $VERSION"
+
+            # Create build arg with uppercase app name
+            APP_UPPER=$(echo "${{ matrix.app }}" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+            BUILD_ARG="${APP_UPPER}_VERSION=${VERSION}"
+            echo "build_arg=$BUILD_ARG" >> $GITHUB_OUTPUT
+            echo "Build arg: $BUILD_ARG"
           else
             echo "has_version=false" >> $GITHUB_OUTPUT
+            echo "build_arg=" >> $GITHUB_OUTPUT
             echo "No VERSION file found"
           fi
 
@@ -126,8 +133,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            ${{ steps.version.outputs.has_version == 'true' && format('{0}_VERSION={1}', upper(matrix.app), steps.version.outputs.version) || '' }}
+          build-args: ${{ steps.version.outputs.build_arg }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
