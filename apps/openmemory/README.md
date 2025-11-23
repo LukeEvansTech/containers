@@ -9,6 +9,15 @@ OpenMemory is an open-source cognitive memory engine that adds long-term memory 
 - **Upstream Repository**: https://github.com/CaviraOSS/OpenMemory
 - **Documentation**: https://openmemory.cavira.app/
 
+## Version Management
+
+This container image **mirrors OpenMemory's versioning exactly**:
+- The `VERSION` file in this directory tracks the current OpenMemory release
+- Container images are tagged with OpenMemory's version numbers (e.g., `1.2.1`)
+- The automated workflow checks daily for new OpenMemory releases and rebuilds automatically
+
+**Current Version**: See [VERSION](./VERSION) file
+
 ## Image Details
 
 - **Registry**: `ghcr.io/lukeevainstech/openmemory`
@@ -16,6 +25,12 @@ OpenMemory is an open-source cognitive memory engine that adds long-term memory 
 - **User**: Non-root (UID/GID 1001)
 - **Data Directory**: `/app/data` (for SQLite database)
 - **Health Check**: HTTP GET on `/health` endpoint
+
+## Available Tags
+
+- `latest` - Always points to the latest OpenMemory release
+- `1.2.1`, `1.2.0`, etc. - Specific OpenMemory versions
+- `1.2`, `1` - Major.minor and major version tags (follows semantic versioning)
 
 ## Building
 

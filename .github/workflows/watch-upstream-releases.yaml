@@ -44,11 +44,20 @@ jobs:
           event-type: build-openmemory
           client-payload: '{"version": "${{ steps.check.outputs.version }}"}'
 
-      - name: Create tracking tag
+      - name: Update VERSION file and create tracking tag
         if: steps.check.outputs.needs_build == 'true'
         run: |
+          # Update VERSION file
+          echo "${{ steps.check.outputs.version }}" > apps/openmemory/VERSION
+
+          # Commit and push VERSION file
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add apps/openmemory/VERSION
+          git commit -m "chore(openmemory): update to version ${{ steps.check.outputs.version }}"
+          git push
+
+          # Create tracking tag
           git tag -a "openmemory-${{ steps.check.outputs.version }}" -m "Track OpenMemory ${{ steps.check.outputs.version }}"
           git push origin "openmemory-${{ steps.check.outputs.version }}"
 
@@ -88,6 +97,9 @@ jobs:
           tags: |
             type=raw,value=latest
             type=raw,value=${{ github.event.client_payload.version }}
+            type=semver,pattern={{version}},value=${{ github.event.client_payload.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ github.event.client_payload.version }}
+            type=semver,pattern={{major}},value=${{ github.event.client_payload.version }},enable=${{ !startsWith(github.event.client_payload.version, '0.') }}
 
       - name: Build and push
         id: build

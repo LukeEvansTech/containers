@@ -1,13 +1,17 @@
 # syntax=docker/dockerfile:1
-ARG OPENMEMORY_VERSION=main
+ARG OPENMEMORY_VERSION=1.2.1
 
 FROM node:20-alpine AS builder
+
+ARG OPENMEMORY_VERSION
 
 LABEL org.opencontainers.image.source="https://github.com/LukeEvansTech/containers"
 LABEL org.opencontainers.image.description="OpenMemory - Long-term memory engine for AI"
 LABEL org.opencontainers.image.licenses="MIT"
-
-ARG OPENMEMORY_VERSION
+LABEL org.opencontainers.image.version="${OPENMEMORY_VERSION}"
+LABEL io.artifacthub.package.readme-url="https://raw.githubusercontent.com/CaviraOSS/OpenMemory/main/README.md"
+LABEL upstream.version="${OPENMEMORY_VERSION}"
+LABEL upstream.source="https://github.com/CaviraOSS/OpenMemory"
 
 WORKDIR /build
 
