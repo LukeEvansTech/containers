@@ -91,6 +91,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Read VERSION file
+        id: version
+        run: |
+          if [ -f "apps/${{ matrix.app }}/VERSION" ]; then
+            VERSION=$(cat apps/${{ matrix.app }}/VERSION)
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "has_version=true" >> $GITHUB_OUTPUT
+            echo "Found VERSION file with version: $VERSION"
+          else
+            echo "has_version=false" >> $GITHUB_OUTPUT
+            echo "No VERSION file found"
+          fi
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -100,18 +113,21 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix={{branch}}-
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.has_version == 'true' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.has_version == 'true' }}
+            type=semver,pattern={{major}},value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.has_version == 'true' && !startsWith(steps.version.outputs.version, '0.') }}
 
       - name: Build and push
         id: build
         uses: docker/build-push-action@v6
         with:
           context: ./apps/${{ matrix.app }}
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            ${{ steps.version.outputs.has_version == 'true' && format('{0}_VERSION={1}', upper(matrix.app), steps.version.outputs.version) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
