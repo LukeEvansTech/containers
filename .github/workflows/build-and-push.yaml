@@ -120,9 +120,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix={{branch}}-
             type=ref,event=pr
-            type=semver,pattern={{version}},value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.has_version == 'true' }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.has_version == 'true' }}
-            type=semver,pattern={{major}},value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.has_version == 'true' && !startsWith(steps.version.outputs.version, '0.') }}
+            type=raw,value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.has_version == 'true' }}
 
       - name: Build and push
         id: build
