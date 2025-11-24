@@ -32,6 +32,13 @@ RUN git clone --depth 1 --branch ${OPENMEMORY_VERSION} https://github.com/Cavira
 # Install dependencies and build dashboard
 WORKDIR /build/dashboard
 
+# Convert next.config.ts to next.config.js to avoid TypeScript at runtime
+RUN if [ -f next.config.ts ]; then \
+        npm install -g typescript && \
+        npx tsc next.config.ts --outFile next.config.js --module commonjs --target es2015 && \
+        rm next.config.ts; \
+    fi
+
 # Set Next.js public env vars for build time
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
