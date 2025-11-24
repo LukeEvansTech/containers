@@ -137,8 +137,7 @@ jobs:
           build-args: |
             ${{ steps.version.outputs.build_arg }}
             CACHEBUST=${{ steps.version.outputs.cachebust }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          no-cache: true
 
       - name: Generate artifact attestation
         if: github.event_name != 'pull_request'
