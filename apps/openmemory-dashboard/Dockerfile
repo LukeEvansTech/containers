@@ -26,6 +26,9 @@ RUN apk add --no-cache \
     bash \
     git
 
+# Cache busting - pass CACHEBUST build arg to force rebuild from this point
+ARG CACHEBUST=1
+
 # Clone OpenMemory repository at specified version
 RUN git clone --depth 1 --branch ${OPENMEMORY_VERSION} https://github.com/CaviraOSS/OpenMemory.git /build
 
