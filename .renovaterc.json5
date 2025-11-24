@@ -1,0 +1,47 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "config:recommended",
+    "docker:enableMajor",
+    "helpers:pinGitHubActionDigests",
+    ":automergeBranch",
+    ":dependencyDashboard",
+    ":disableRateLimiting",
+    ":semanticCommits",
+    ":timezone(Europe/London)",
+  ],
+  dependencyDashboardTitle: "Renovate Dashboard",
+  suppressNotifications: [
+    "prEditedNotification",
+    "prIgnoreNotification",
+  ],
+  packageRules: [
+    // Automerge minor and patch updates for Docker base images
+    {
+      matchManagers: ["dockerfile"],
+      matchUpdateTypes: ["minor", "patch"],
+      automerge: true,
+    },
+    // Automerge GitHub Actions minor and patch updates
+    {
+      matchManagers: ["github-actions"],
+      matchUpdateTypes: ["minor", "patch", "digest"],
+      automerge: true,
+    },
+    // Group kubectl updates
+    {
+      matchPackagePatterns: ["kubectl"],
+      groupName: "kubectl",
+    },
+    // Group Python pip packages by app
+    {
+      matchManagers: ["pip_requirements"],
+      groupName: "Python dependencies",
+    },
+  ],
+  // Request reviews from GitHub Copilot on all PRs
+  reviewers: [
+    "github-copilot[bot]"
+  ],
+  reviewersSampleSize: 1,
+}
