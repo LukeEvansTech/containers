@@ -7,11 +7,11 @@ ARG TARGETARCH=amd64
 WORKDIR /downloads
 
 # Download kubectl
-RUN wget -O kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${TARGETARCH}/kubectl" && \
+RUN wget -q -O kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${TARGETARCH}/kubectl" && \
     chmod +x kubectl
 
 # Download apc-p15-tool
-RUN wget "https://github.com/gregtwallace/apc-p15-tool/releases/download/${APC_TOOL_VERSION}/apc-p15-tool-${APC_TOOL_VERSION}_linux_${TARGETARCH}.tar.gz" && \
+RUN wget -q "https://github.com/gregtwallace/apc-p15-tool/releases/download/${APC_TOOL_VERSION}/apc-p15-tool-${APC_TOOL_VERSION}_linux_${TARGETARCH}.tar.gz" && \
     tar -xzf apc-p15-tool-*.tar.gz && \
     chmod +x apc-p15-tool
 

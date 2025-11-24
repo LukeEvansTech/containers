@@ -11,28 +11,32 @@ Copyright (c) Jari Turkia (original)
 Modified for Redfish-only support
 """
 
-import os
 import argparse
-import re
-import requests
-import logging
 import json
+import logging
+import os
+import re
 from datetime import datetime
 
+import requests
+
 REQUEST_TIMEOUT = 30.0
+
 
 class RedfishIPMIUpdater:
     """IPMI certificate updater for Redfish-based Supermicro boards (X12/X13/H13)"""
 
     def __init__(self, session, ipmi_url):
         self.session = session
-        self.ipmi_url = ipmi_url.rstrip('/')
+        self.ipmi_url = ipmi_url.rstrip("/")
 
         # Redfish API endpoints
-        self.login_url = f'{ipmi_url}/redfish/v1/SessionService/Sessions'
-        self.cert_info_url = f'{ipmi_url}/redfish/v1/UpdateService/Oem/Supermicro/SSLCert'
-        self.upload_cert_url = f'{ipmi_url}/redfish/v1/UpdateService/Oem/Supermicro/SSLCert/Actions/SmcSSLCert.Upload'
-        self.reboot_url = f'{ipmi_url}/redfish/v1/Managers/1/Actions/Manager.Reset'
+        self.login_url = f"{ipmi_url}/redfish/v1/SessionService/Sessions"
+        self.cert_info_url = f"{ipmi_url}/redfish/v1/UpdateService/Oem/Supermicro/SSLCert"
+        self.upload_cert_url = (
+            f"{ipmi_url}/redfish/v1/UpdateService/Oem/Supermicro/SSLCert/Actions/SmcSSLCert.Upload"
+        )
+        self.reboot_url = f"{ipmi_url}/redfish/v1/Managers/1/Actions/Manager.Reset"
 
         error_log = logging.getLogger("RedfishIPMIUpdater")
         error_log.setLevel(logging.ERROR)
@@ -50,12 +54,9 @@ class RedfishIPMIUpdater:
         """
         print(f"DEBUG: Logging in via Redfish to {self.login_url}")
 
-        login_data = {
-            'UserName': username,
-            'Password': password
-        }
+        login_data = {"UserName": username, "Password": password}
 
-        request_headers = {'Content-Type': 'application/json'}
+        request_headers = {"Content-Type": "application/json"}
 
         try:
             result = self.session.post(
@@ -63,7 +64,7 @@ class RedfishIPMIUpdater:
                 data=json.dumps(login_data),
                 headers=request_headers,
                 timeout=REQUEST_TIMEOUT,
-                verify=False
+                verify=False,
             )
         except Exception as e:
             print(f"ERROR: Connection error during login: {e}")
@@ -83,17 +84,11 @@ class RedfishIPMIUpdater:
         :param token: X-Auth-Token from login
         :return: dict with certificate info or False
         """
-        request_headers = {
-            'Content-Type': 'application/json',
-            'X-Auth-Token': token
-        }
+        request_headers = {"Content-Type": "application/json", "X-Auth-Token": token}
 
         try:
             r = self.session.get(
-                self.cert_info_url,
-                headers=request_headers,
-                verify=False,
-                timeout=REQUEST_TIMEOUT
+                self.cert_info_url, headers=request_headers, verify=False, timeout=REQUEST_TIMEOUT
             )
         except Exception as e:
             print(f"ERROR: Error getting cert info: {e}")
@@ -106,17 +101,13 @@ class RedfishIPMIUpdater:
         try:
             data = r.json()
             # Parse dates - Supermicro format includes timezone that needs to be stripped
-            valid_from_str = data['VaildFrom'].rstrip(re.split(r'\d{4}', data['VaildFrom'])[1])
-            valid_until_str = data['GoodTHRU'].rstrip(re.split(r'\d{4}', data['GoodTHRU'])[1])
+            valid_from_str = data["VaildFrom"].rstrip(re.split(r"\d{4}", data["VaildFrom"])[1])
+            valid_until_str = data["GoodTHRU"].rstrip(re.split(r"\d{4}", data["GoodTHRU"])[1])
 
             valid_from = datetime.strptime(valid_from_str, r"%b %d %H:%M:%S %Y")
             valid_until = datetime.strptime(valid_until_str, r"%b %d %H:%M:%S %Y")
 
-            return {
-                'has_cert': True,
-                'valid_from': valid_from,
-                'valid_until': valid_until
-            }
+            return {"has_cert": True, "valid_from": valid_from, "valid_until": valid_until}
         except Exception as e:
             print(f"ERROR: Error parsing cert info: {e}")
             self.logger.error(f"Error parsing cert info: {e}")
@@ -133,18 +124,25 @@ class RedfishIPMIUpdater:
         print(f"DEBUG: Reading certificate from {cert_file}")
         print(f"DEBUG: Reading key from {key_file}")
 
-        with open(key_file, 'rb') as fh:
+        with open(key_file, "rb") as fh:
             key_data = fh.read()
 
-        with open(cert_file, 'rb') as fh:
+        with open(cert_file, "rb") as fh:
             cert_data = fh.read()
             # Extract certificates only (IPMI doesn't like DH PARAMS)
-            cert_data = b'\n'.join(
-                re.findall(b'-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----', cert_data, re.DOTALL)
-            ) + b'\n'
+            cert_data = (
+                b"\n".join(
+                    re.findall(
+                        b"-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----",
+                        cert_data,
+                        re.DOTALL,
+                    )
+                )
+                + b"\n"
+            )
 
         # For Redfish, only send the server certificate, not the full chain
-        substr = b'-----END CERTIFICATE-----\n'
+        substr = b"-----END CERTIFICATE-----\n"
         cert_only = cert_data.split(substr)[0] + substr
 
         print(f"DEBUG: Certificate data length: {len(cert_data)} bytes")
@@ -153,11 +151,11 @@ class RedfishIPMIUpdater:
 
         # Use dict format for multipart file upload
         files_to_upload = {
-            'cert_file': ('cert.pem', cert_only, 'application/octet-stream'),
-            'key_file': ('key.pem', key_data, 'application/octet-stream')
+            "cert_file": ("cert.pem", cert_only, "application/octet-stream"),
+            "key_file": ("key.pem", key_data, "application/octet-stream"),
         }
 
-        request_headers = {'X-Auth-Token': token}
+        request_headers = {"X-Auth-Token": token}
 
         print(f"DEBUG: Uploading to {self.upload_cert_url}")
         try:
@@ -166,7 +164,7 @@ class RedfishIPMIUpdater:
                 files=files_to_upload,
                 headers=request_headers,
                 timeout=REQUEST_TIMEOUT,
-                verify=False
+                verify=False,
             )
         except Exception as e:
             print(f"ERROR: Upload error: {e}")
@@ -174,10 +172,10 @@ class RedfishIPMIUpdater:
 
         print(f"DEBUG: Upload response status: {result.status_code}")
         print(f"DEBUG: Upload response text: {result.text}")
-        self.logger.debug("Upload response status: %s" % result.status_code)
-        self.logger.debug("Upload response text: %s" % result.text)
+        self.logger.debug(f"Upload response status: {result.status_code}")
+        self.logger.debug(f"Upload response text: {result.text}")
 
-        if 'SSL certificate and private key were successfully uploaded' not in result.text:
+        if "SSL certificate and private key were successfully uploaded" not in result.text:
             print(f"ERROR: Upload failed. Status: {result.status_code}")
             print(f"ERROR: Response: {result.text}")
             print(f"ERROR: Response headers: {result.headers}")
@@ -192,14 +190,11 @@ class RedfishIPMIUpdater:
         :param token: X-Auth-Token from login
         :return: bool
         """
-        request_headers = {'X-Auth-Token': token}
+        request_headers = {"X-Auth-Token": token}
 
         try:
             result = self.session.post(
-                self.reboot_url,
-                headers=request_headers,
-                timeout=REQUEST_TIMEOUT,
-                verify=False
+                self.reboot_url, headers=request_headers, timeout=REQUEST_TIMEOUT, verify=False
             )
         except Exception as e:
             print(f"ERROR: Reboot error: {e}")
@@ -215,35 +210,32 @@ class RedfishIPMIUpdater:
 def parse_valid_until(pem_file):
     """Parse certificate expiration date from PEM file"""
     from OpenSSL import crypto as c
-    with open(pem_file, 'rb') as fh:
+
+    with open(pem_file, "rb") as fh:
         cert = c.load_certificate(c.FILETYPE_PEM, fh.read())
-    return datetime.strptime(cert.get_notAfter().decode('utf8'), "%Y%m%d%H%M%SZ")
+    return datetime.strptime(cert.get_notAfter().decode("utf8"), "%Y%m%d%H%M%SZ")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Update Supermicro IPMI SSL certificate (Redfish API only)'
+        description="Update Supermicro IPMI SSL certificate (Redfish API only)"
     )
-    parser.add_argument('--ipmi-url', required=True,
-                        help='Supermicro IPMI URL')
-    parser.add_argument('--model', required=True,
-                        help='Board model: X12, X13, or H13 (all use Redfish)')
-    parser.add_argument('--key-file', required=True,
-                        help='X.509 Private key filename')
-    parser.add_argument('--cert-file', required=True,
-                        help='X.509 Certificate filename')
-    parser.add_argument('--username', required=True,
-                        help='IPMI username with admin access')
-    parser.add_argument('--password', required=True,
-                        help='IPMI user password')
-    parser.add_argument('--no-reboot', action='store_true',
-                        help='Skip IPMI reboot (manual reboot required)')
-    parser.add_argument('--force-update', action='store_true',
-                        help='Force update even if certificate dates match')
-    parser.add_argument('--quiet', action='store_true',
-                        help='Minimal output')
-    parser.add_argument('--debug', action='store_true',
-                        help='Enable debug logging')
+    parser.add_argument("--ipmi-url", required=True, help="Supermicro IPMI URL")
+    parser.add_argument(
+        "--model", required=True, help="Board model: X12, X13, or H13 (all use Redfish)"
+    )
+    parser.add_argument("--key-file", required=True, help="X.509 Private key filename")
+    parser.add_argument("--cert-file", required=True, help="X.509 Certificate filename")
+    parser.add_argument("--username", required=True, help="IPMI username with admin access")
+    parser.add_argument("--password", required=True, help="IPMI user password")
+    parser.add_argument(
+        "--no-reboot", action="store_true", help="Skip IPMI reboot (manual reboot required)"
+    )
+    parser.add_argument(
+        "--force-update", action="store_true", help="Force update even if certificate dates match"
+    )
+    parser.add_argument("--quiet", action="store_true", help="Minimal output")
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
 
     args = parser.parse_args()
 
@@ -256,7 +248,7 @@ def main():
         exit(2)
 
     # Normalize URL
-    if args.ipmi_url.endswith('/'):
+    if args.ipmi_url.endswith("/"):
         args.ipmi_url = args.ipmi_url[:-1]
 
     # Validate model
@@ -267,13 +259,13 @@ def main():
 
     # Normalize X13 and H13 to X12 (they use the same API)
     model_display = args.model.upper()
-    if args.model.upper() in ["X13", "H13"]:
-        if not args.quiet:
-            print(f"Note: {args.model.upper()} uses same Redfish API as X12")
+    if args.model.upper() in ["X13", "H13"] and not args.quiet:
+        print(f"Note: {args.model.upper()} uses same Redfish API as X12")
 
     # Enable debug logging if requested
     if args.debug:
         import http.client as http_client
+
         http_client.HTTPConnection.debuglevel = 1
 
         logging.basicConfig()
@@ -306,9 +298,9 @@ def main():
         exit(2)
 
     try:
-        token = login_response.headers['X-Auth-Token']
+        token = login_response.headers["X-Auth-Token"]
     except Exception as e:
-        print(f'ERROR: Failed to get auth token: {e}')
+        print(f"ERROR: Failed to get auth token: {e}")
         exit(2)
 
     # Get current certificate info
@@ -317,8 +309,8 @@ def main():
         print("ERROR: Failed to get certificate information from IPMI!")
         exit(2)
 
-    current_valid_until = cert_info.get('valid_until', None)
-    if not args.quiet and cert_info['has_cert']:
+    current_valid_until = cert_info.get("valid_until", None)
+    if not args.quiet and cert_info["has_cert"]:
         print(f"There exists a certificate, which is valid until: {cert_info['valid_until']}")
 
     # Check if update is needed
@@ -344,7 +336,7 @@ def main():
         print("ERROR: Failed to verify certificate after upload!")
         exit(2)
 
-    if not args.quiet and cert_info['has_cert']:
+    if not args.quiet and cert_info["has_cert"]:
         print(f"After upload, certificate is valid until: {cert_info['valid_until']}")
 
     # Reboot if requested

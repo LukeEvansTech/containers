@@ -35,7 +35,8 @@ docker run --rm \
 
 ### With Cert Warden
 
-This container is designed to be used with Cert Warden's post-processing feature. The Kubernetes Job mounts certificates as files and reads configuration from Kubernetes Secrets.
+This container is designed to be used with Cert Warden's post-processing feature.
+The Kubernetes Job mounts certificates as files and reads configuration from Kubernetes Secrets.
 
 ### Kubernetes Job
 

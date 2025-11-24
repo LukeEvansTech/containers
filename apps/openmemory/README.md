@@ -4,14 +4,17 @@ This directory contains the Dockerfile for building OpenMemory container images.
 
 ## About OpenMemory
 
-OpenMemory is an open-source cognitive memory engine that adds long-term memory to AI systems. It provides persistent memory with multi-sector cognitive structure, enabling AI systems to maintain context across conversations.
+OpenMemory is an open-source cognitive memory engine that adds long-term memory to AI systems.
+It provides persistent memory with multi-sector cognitive structure,
+enabling AI systems to maintain context across conversations.
 
-- **Upstream Repository**: https://github.com/CaviraOSS/OpenMemory
-- **Documentation**: https://openmemory.cavira.app/
+- **Upstream Repository**: <https://github.com/CaviraOSS/OpenMemory>
+- **Documentation**: <https://openmemory.cavira.app/>
 
 ## Version Management
 
 This container image **mirrors OpenMemory's versioning exactly**:
+
 - The `VERSION` file in this directory tracks the current OpenMemory release
 - Container images are tagged with OpenMemory's version numbers (e.g., `1.2.1`)
 - The automated workflow checks daily for new OpenMemory releases and rebuilds automatically
@@ -62,9 +65,11 @@ docker run -d \
 
 ## Environment Variables
 
-See the [official documentation](https://openmemory.cavira.app/docs/installation) for a complete list of environment variables.
+See the [official documentation](https://openmemory.cavira.app/docs/installation)
+for a complete list of environment variables.
 
 Key variables:
+
 - `OM_API_KEY`: API key for authentication (required)
 - `OM_PORT`: Server port (default: 8080)
 - `OM_METADATA_BACKEND`: Backend type (sqlite/postgres)
@@ -75,6 +80,7 @@ Key variables:
 ## Automatic Builds
 
 This image is automatically rebuilt when:
+
 - Changes are made to files in this directory
 - A new OpenMemory release is published (via scheduled workflow)
 - Manually triggered via GitHub Actions

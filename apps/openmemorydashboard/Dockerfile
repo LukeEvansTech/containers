@@ -34,6 +34,7 @@ WORKDIR /build/dashboard
 
 # Convert next.config.ts to next.config.js to avoid TypeScript at runtime
 # Remove TypeScript syntax (import type, type annotations, export default)
+SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 RUN if [ -f next.config.ts ]; then \
         sed 's/import type.*from.*;//' next.config.ts | \
         sed 's/: NextConfig//' | \
@@ -44,11 +45,9 @@ RUN if [ -f next.config.ts ]; then \
 # Set Next.js public env vars for build time
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
-# Install all dependencies
-RUN npm install --legacy-peer-deps
-
-# Build the application
-RUN npm run build
+# Install all dependencies and build the application
+RUN npm install --legacy-peer-deps && \
+    npm run build
 
 # Production stage
 FROM node:20-alpine

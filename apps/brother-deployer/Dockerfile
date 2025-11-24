@@ -7,11 +7,11 @@ ARG TARGETARCH=amd64
 WORKDIR /downloads
 
 # Download kubectl
-RUN wget -O kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${TARGETARCH}/kubectl" && \
+RUN wget -q -O kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${TARGETARCH}/kubectl" && \
     chmod +x kubectl
 
 # Download brother-cert
-RUN wget "https://github.com/gregtwallace/brother-cert/releases/download/${BROTHER_CERT_VERSION}/brother-cert-${BROTHER_CERT_VERSION}_linux_${TARGETARCH}.tar.gz" && \
+RUN wget -q "https://github.com/gregtwallace/brother-cert/releases/download/${BROTHER_CERT_VERSION}/brother-cert-${BROTHER_CERT_VERSION}_linux_${TARGETARCH}.tar.gz" && \
     tar -xzf brother-cert-*.tar.gz && \
     chmod +x brother-cert
 

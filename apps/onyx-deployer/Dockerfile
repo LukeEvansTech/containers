@@ -6,7 +6,7 @@ ARG TARGETARCH=amd64
 WORKDIR /downloads
 
 # Download kubectl
-RUN wget -O kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${TARGETARCH}/kubectl" && \
+RUN wget -q -O kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${TARGETARCH}/kubectl" && \
     chmod +x kubectl
 
 # Final runtime image

@@ -108,11 +108,13 @@ python3 onyx_cert_updater.py \
 ## API Details
 
 The deployer uses the Onyx JSON API:
+
 - **Login**: `POST /admin/launch?script=rh&template=login&action=login`
 - **Commands**: `POST /admin/launch?script=rh&template=json-request&action=json-login`
 
 Key commands executed:
-```
+
+```text
 crypto certificate name <name> public-cert pem "<PEM>"
 crypto certificate name <name> private-key pem "<PEM>"
 web https certificate name <name>

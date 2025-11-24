@@ -25,21 +25,18 @@ RUN apk add --no-cache \
     git
 
 # Install Bun
+SHELL ["/bin/ash", "-o", "pipefail", "-c"]
 RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/root/.bun/bin:$PATH"
 
 # Clone OpenMemory repository at specified version
 RUN git clone --depth 1 --branch ${OPENMEMORY_VERSION} https://github.com/CaviraOSS/OpenMemory.git /build
 
-# Install dependencies
+# Install dependencies, build, and prune
 WORKDIR /build/backend
-RUN bun install --concurrent-scripts=1 --concurrent-io=50
-
-# Build the application
-RUN bun run build
-
-# Remove dev dependencies
-RUN npm prune --production
+RUN bun install --concurrent-scripts=1 --concurrent-io=50 && \
+    bun run build && \
+    npm prune --production
 
 # Production stage
 FROM node:20-alpine

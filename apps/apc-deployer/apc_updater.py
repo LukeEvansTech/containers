@@ -16,18 +16,26 @@
 # this program; if not, write to the Free Software Foundation, Inc., 51
 # Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import os
-import sys
 import argparse
-import subprocess
-import tempfile
 import logging
+import os
+import subprocess
+import sys
 
 REQUEST_TIMEOUT = 30.0
 
+
 class APCUpdater:
-    def __init__(self, hostname, username, password, fingerprint, apc_tool_path,
-                 insecure_cipher=False, debug=False):
+    def __init__(
+        self,
+        hostname,
+        username,
+        password,
+        fingerprint,
+        apc_tool_path,
+        insecure_cipher=False,
+        debug=False,
+    ):
         self.hostname = hostname
         self.username = username
         self.password = password
@@ -38,10 +46,7 @@ class APCUpdater:
 
         # Setup logging
         log_level = logging.DEBUG if debug else logging.INFO
-        logging.basicConfig(
-            level=log_level,
-            format='%(asctime)s - %(levelname)s - %(message)s'
-        )
+        logging.basicConfig(level=log_level, format="%(asctime)s - %(levelname)s - %(message)s")
         self.logger = logging.getLogger("APCUpdater")
 
     def install_cert(self, key_file, cert_file):
@@ -66,33 +71,34 @@ class APCUpdater:
         # Build the apc-p15-tool command
         cmd = [
             self.apc_tool_path,
-            'install',
-            '--keyfile', key_file,
-            '--certfile', cert_file,
-            '--hostname', self.hostname,
-            '--username', self.username,
-            '--password', self.password,
-            '--fingerprint', self.fingerprint
+            "install",
+            "--keyfile",
+            key_file,
+            "--certfile",
+            cert_file,
+            "--hostname",
+            self.hostname,
+            "--username",
+            self.username,
+            "--password",
+            self.password,
+            "--fingerprint",
+            self.fingerprint,
         ]
 
         # Add insecure cipher flag if needed (required for older APC devices with cryptlib SSH)
         if self.insecure_cipher:
-            cmd.append('--insecurecipher')
+            cmd.append("--insecurecipher")
             self.logger.warning("Using --insecurecipher flag for legacy SSH support")
 
         if self.debug:
-            cmd.append('--debug')
+            cmd.append("--debug")
 
         self.logger.debug(f"Executing command: {' '.join(cmd[:7])} [credentials hidden]")
 
         try:
             # Run the apc-p15-tool command
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=REQUEST_TIMEOUT
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=REQUEST_TIMEOUT)
 
             # Log output
             if result.stdout:
@@ -105,7 +111,9 @@ class APCUpdater:
             if "apc p15 file installed" in result.stdout:
                 self.logger.info("✅ Certificate installed successfully!")
                 if "failed to dial webui for verification" in result.stderr:
-                    self.logger.warning("⚠️  Web UI verification failed (this is OK - cert is installed)")
+                    self.logger.warning(
+                        "⚠️  Web UI verification failed (this is OK - cert is installed)"
+                    )
                 return True
 
             # If we didn't find the success message, check the return code
@@ -125,27 +133,25 @@ class APCUpdater:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Update APC NMC SSL certificate')
-    parser.add_argument('--hostname', required=True,
-                        help='APC NMC hostname or IP address')
-    parser.add_argument('--username', required=True,
-                        help='APC NMC username with admin access')
-    parser.add_argument('--password', required=True,
-                        help='APC NMC user password')
-    parser.add_argument('--fingerprint', required=True,
-                        help='APC NMC SSH host key fingerprint')
-    parser.add_argument('--key-file', required=True,
-                        help='X.509 Private key filename')
-    parser.add_argument('--cert-file', required=True,
-                        help='X.509 Certificate filename')
-    parser.add_argument('--apc-tool-path', default='/usr/local/bin/apc-p15-tool',
-                        help='Path to apc-p15-tool binary (default: /usr/local/bin/apc-p15-tool)')
-    parser.add_argument('--insecure-cipher', action='store_true',
-                        help='Use insecure ciphers for older APC devices (--insecurecipher)')
-    parser.add_argument('--quiet', action='store_true',
-                        help='Do not output anything if successful')
-    parser.add_argument('--debug', action='store_true',
-                        help='Output additional debugging')
+    parser = argparse.ArgumentParser(description="Update APC NMC SSL certificate")
+    parser.add_argument("--hostname", required=True, help="APC NMC hostname or IP address")
+    parser.add_argument("--username", required=True, help="APC NMC username with admin access")
+    parser.add_argument("--password", required=True, help="APC NMC user password")
+    parser.add_argument("--fingerprint", required=True, help="APC NMC SSH host key fingerprint")
+    parser.add_argument("--key-file", required=True, help="X.509 Private key filename")
+    parser.add_argument("--cert-file", required=True, help="X.509 Certificate filename")
+    parser.add_argument(
+        "--apc-tool-path",
+        default="/usr/local/bin/apc-p15-tool",
+        help="Path to apc-p15-tool binary (default: /usr/local/bin/apc-p15-tool)",
+    )
+    parser.add_argument(
+        "--insecure-cipher",
+        action="store_true",
+        help="Use insecure ciphers for older APC devices (--insecurecipher)",
+    )
+    parser.add_argument("--quiet", action="store_true", help="Do not output anything if successful")
+    parser.add_argument("--debug", action="store_true", help="Output additional debugging")
     args = parser.parse_args()
 
     # Confirm args
@@ -168,7 +174,7 @@ def main():
         fingerprint=args.fingerprint,
         apc_tool_path=args.apc_tool_path,
         insecure_cipher=args.insecure_cipher,
-        debug=args.debug
+        debug=args.debug,
     )
 
     # Install certificate

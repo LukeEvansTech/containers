@@ -5,6 +5,7 @@ Web UI for OpenMemory - A long-term memory engine for AI applications.
 ## Description
 
 This container provides the web dashboard interface for OpenMemory, allowing you to:
+
 - Browse memories per sector
 - See decay curves
 - Explore graph links
@@ -34,7 +35,9 @@ This container provides the web dashboard interface for OpenMemory, allowing you
 | `PORT` | Port to listen on | No | `3000` (default) |
 | `HOSTNAME` | Hostname to bind to | No | `0.0.0.0` (default) |
 
-**Note**: The `NEXT_PUBLIC_API_URL` is set at build time and defaults to the internal Kubernetes cluster DNS (`http://openmemory.ai.svc.cluster.local:8080`). This keeps the backend domain private and prevents it from being exposed to browsers.
+**Note**: The `NEXT_PUBLIC_API_URL` is set at build time and defaults to the internal Kubernetes
+cluster DNS (`http://openmemory.ai.svc.cluster.local:8080`).
+This keeps the backend domain private and prevents it from being exposed to browsers.
 
 ## Usage
 

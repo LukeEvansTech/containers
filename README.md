@@ -1,19 +1,13 @@
-<div align="center">
+# Containers
 
-## Containers
-
-_Container images for home infrastructure certificate management_
-
-</div>
-
-<div align="center">
+Container images for home infrastructure certificate management
 
 ![GitHub Repo stars](https://img.shields.io/github/stars/LukeEvansTech/containers?style=for-the-badge)
-![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/LukeEvansTech/containers/release.yaml?style=for-the-badge&label=Release)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/LukeEvansTech/containers/release.yaml?style=for-the-badge&label=Release)
 
-</div>
-
-Welcome to my container images! These are purpose-built containers for automated certificate deployment to various hardware devices, designed to work with [Cert Warden](https://www.certwarden.com/) post-processing.
+Welcome to my container images! These are purpose-built containers for automated certificate
+deployment to various hardware devices, designed to work with
+[Cert Warden](https://www.certwarden.com/) post-processing.
 
 ## Available Containers
 
@@ -23,9 +17,12 @@ Welcome to my container images! These are purpose-built containers for automated
 
 ## Mission Statement
 
-This repository provides specialized post-processing containers for [Cert Warden](https://www.certwarden.com/), enabling automated certificate deployment to hardware devices that don't have native certificate management integrations.
+This repository provides specialized post-processing containers for
+[Cert Warden](https://www.certwarden.com/), enabling automated certificate deployment to
+hardware devices that don't have native certificate management integrations.
 
 Each container:
+
 - Accepts certificate data via environment variables
 - Authenticates to the target device
 - Deploys the certificate securely
@@ -33,7 +30,9 @@ Each container:
 
 ## Usage with Cert Warden
 
-These containers are designed to run as [Cert Warden post-processing binaries](https://www.certwarden.com/docs/using_certificates/post_process_bin/). Configure them in Cert Warden's certificate settings:
+These containers are designed to run as
+[Cert Warden post-processing binaries](https://www.certwarden.com/docs/using_certificates/post_process_bin/).
+Configure them in Cert Warden's certificate settings:
 
 1. Build and push the container to your registry
 2. In Cert Warden, configure post-processing for a certificate
@@ -41,6 +40,7 @@ These containers are designed to run as [Cert Warden post-processing binaries](h
 4. Cert Warden will automatically trigger the container after certificate renewal
 
 Example configuration:
+
 ```yaml
 # In Cert Warden post-processing settings
 binary: /path/to/container-binary
