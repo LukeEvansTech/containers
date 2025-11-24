@@ -50,16 +50,25 @@ jobs:
           # Update VERSION file
           echo "${{ steps.check.outputs.version }}" > apps/openmemory/VERSION
 
-          # Commit and push VERSION file
+          # Check if there are changes to commit
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add apps/openmemory/VERSION
-          git commit -m "chore(openmemory): update to version ${{ steps.check.outputs.version }}"
-          git push
 
-          # Create tracking tag
-          git tag -a "openmemory-${{ steps.check.outputs.version }}" -m "Track OpenMemory ${{ steps.check.outputs.version }}"
-          git push origin "openmemory-${{ steps.check.outputs.version }}"
+          if git diff --staged --quiet; then
+            echo "VERSION file already up to date, skipping commit"
+          else
+            git commit -m "chore(openmemory): update to version ${{ steps.check.outputs.version }}"
+            git push
+          fi
+
+          # Create tracking tag (skip if already exists)
+          if git tag -a "openmemory-${{ steps.check.outputs.version }}" -m "Track OpenMemory ${{ steps.check.outputs.version }}"; then
+            git push origin "openmemory-${{ steps.check.outputs.version }}"
+            echo "Created and pushed tracking tag"
+          else
+            echo "Tracking tag already exists"
+          fi
 
   build-on-new-release:
     name: Build OpenMemory ${{ github.event.client_payload.version }}
