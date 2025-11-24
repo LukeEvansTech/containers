@@ -17,17 +17,15 @@ LABEL upstream.source="https://github.com/CaviraOSS/OpenMemory"
 
 WORKDIR /build
 
-# Install build dependencies
+# Install build dependencies and clone repository
 RUN apk add --no-cache \
     python3 \
     make \
     g++ \
     curl \
     bash \
-    git
-
-# Clone OpenMemory repository at specified version
-RUN git clone --depth 1 --branch ${OPENMEMORY_VERSION} https://github.com/CaviraOSS/OpenMemory.git /build
+    git && \
+    git clone --depth 1 --branch ${OPENMEMORY_VERSION} https://github.com/CaviraOSS/OpenMemory.git /build
 
 # Install dependencies and build dashboard
 WORKDIR /build/dashboard
