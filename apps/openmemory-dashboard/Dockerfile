@@ -33,9 +33,11 @@ RUN git clone --depth 1 --branch ${OPENMEMORY_VERSION} https://github.com/Cavira
 WORKDIR /build/dashboard
 
 # Convert next.config.ts to next.config.js to avoid TypeScript at runtime
+# Remove TypeScript syntax (import type, type annotations, export default)
 RUN if [ -f next.config.ts ]; then \
-        npm install -g typescript && \
-        npx tsc next.config.ts --outFile next.config.js --module commonjs --target es2015 && \
+        sed 's/import type.*from.*;//' next.config.ts | \
+        sed 's/: NextConfig//' | \
+        sed 's/export default/module.exports =/' > next.config.js && \
         rm next.config.ts; \
     fi
 
