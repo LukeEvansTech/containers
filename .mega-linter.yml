@@ -1,0 +1,103 @@
+# MegaLinter Configuration
+# https://megalinter.io/latest/configuration/
+
+# Only enable linters for languages/formats used in this project
+ENABLE_LINTERS:
+  # Python linting
+  - PYTHON_RUFF          # Fast Python linter (replaces flake8, isort, etc.)
+  - PYTHON_BLACK         # Python code formatter
+
+  # JavaScript/Node.js linting
+  - JAVASCRIPT_ES        # ESLint for JavaScript
+  - JAVASCRIPT_PRETTIER  # Prettier for JavaScript formatting
+
+  # Dockerfile linting
+  - DOCKERFILE_HADOLINT  # Dockerfile best practices
+
+  # YAML linting
+  - YAML_YAMLLINT        # YAML syntax and style
+
+  # Markdown linting
+  - MARKDOWN_MARKDOWNLINT # Markdown style checker
+
+  # GitHub Actions linting
+  - ACTION_ACTIONLINT    # GitHub Actions workflow linter
+
+  # JSON linting (for package.json, etc.)
+  - JSON_JSONLINT        # JSON syntax validation
+
+# Apply fixes automatically where possible
+APPLY_FIXES: none  # Set to 'all' to auto-fix, or specific linters like ['PYTHON_BLACK', 'JAVASCRIPT_PRETTIER']
+
+# Fail on specific linter errors (set to false to report only)
+DISABLE_ERRORS: false
+
+# Show elapsed time for each linter
+SHOW_ELAPSED_TIME: true
+
+# Log level
+LOG_LEVEL: INFO
+
+# Exclude patterns
+EXCLUDED_DIRECTORIES:
+  - node_modules
+  - .git
+  - __pycache__
+  - .next
+  - dist
+  - build
+  - coverage
+
+# Filter by status - only lint changed files in PRs
+FILTER_REGEX_EXCLUDE: "(node_modules|\.git|__pycache__|\.next|dist|build)"
+
+# Linter-specific configurations
+
+# Python Ruff configuration
+PYTHON_RUFF_ARGUMENTS: "--config pyproject.toml"
+PYTHON_RUFF_CONFIG_FILE: pyproject.toml
+
+# Python Black configuration
+PYTHON_BLACK_ARGUMENTS: "--check --diff"
+
+# Hadolint configuration
+DOCKERFILE_HADOLINT_ARGUMENTS: "--ignore DL3018 --ignore DL3013"
+# DL3018: Pin versions in apk add (often impractical for alpine packages)
+# DL3013: Pin versions in pip install (handled by requirements files)
+
+# YAML configuration
+YAML_YAMLLINT_CONFIG_FILE: .yamllint.yml
+
+# Markdown configuration
+MARKDOWN_MARKDOWNLINT_CONFIG_FILE: .markdownlint.json
+
+# ESLint configuration - use project config if exists
+JAVASCRIPT_ES_CONFIG_FILE: .eslintrc.json
+
+# Prettier configuration
+JAVASCRIPT_PRETTIER_ARGUMENTS: "--check"
+
+# GitHub token for API calls (set in CI)
+# GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+# Report configuration
+REPORTERS:
+  - CONSOLE
+  - GITHUB_COMMENT  # Comment on PRs with results
+  - GITHUB_STATUS   # Update commit status
+
+# Parallel execution
+PARALLEL: true
+
+# File extensions to process
+JAVASCRIPT_FILE_EXTENSIONS:
+  - .js
+  - .jsx
+  - .mjs
+
+PYTHON_FILE_EXTENSIONS:
+  - .py
+
+YAML_FILE_EXTENSIONS:
+  - .yml
+  - .yaml
