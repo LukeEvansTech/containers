@@ -59,7 +59,10 @@ COPY --from=builder --chown=appuser:appuser /build/dashboard/public ./public
 COPY --from=builder --chown=appuser:appuser /build/dashboard/package.json ./package.json
 COPY --from=builder --chown=appuser:appuser /build/dashboard/package-lock.json ./package-lock.json
 
-# Install production dependencies only (config is baked into .next build)
+# Create a minimal next.config.js to prevent TypeScript loading
+RUN echo 'module.exports = {}' > next.config.js
+
+# Install production dependencies only
 RUN npm ci --omit=dev && \
     chown -R appuser:appuser /app
 
