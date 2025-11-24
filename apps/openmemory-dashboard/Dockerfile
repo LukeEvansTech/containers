@@ -67,7 +67,7 @@ WORKDIR /app
 COPY --from=builder --chown=appuser:appuser /build/dashboard/.next ./.next
 COPY --from=builder --chown=appuser:appuser /build/dashboard/public ./public
 COPY --from=builder --chown=appuser:appuser /build/dashboard/package*.json ./
-COPY --from=builder --chown=appuser:appuser /build/dashboard/next.config.* ./
+COPY --from=builder --chown=appuser:appuser /build/dashboard/next.config.js ./
 
 # Install all dependencies (including TypeScript)
 RUN npm ci && \
