@@ -60,8 +60,10 @@ COPY --from=builder --chown=appuser:appuser /build/dashboard/package.json ./pack
 COPY --from=builder --chown=appuser:appuser /build/dashboard/package-lock.json ./package-lock.json
 COPY --from=builder --chown=appuser:appuser /build/dashboard/next.config.ts ./next.config.ts
 
-# Install production dependencies only
+# Install production dependencies
+# Include typescript since next.config.ts requires it at runtime
 RUN npm ci --omit=dev && \
+    npm install typescript && \
     chown -R appuser:appuser /app
 
 USER appuser
