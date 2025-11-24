@@ -49,7 +49,7 @@ EXCLUDED_DIRECTORIES:
   - coverage
 
 # Filter by status - only lint changed files in PRs
-FILTER_REGEX_EXCLUDE: "(node_modules|\.git|__pycache__|\.next|dist|build)"
+FILTER_REGEX_EXCLUDE: '(node_modules|\.git|__pycache__|\.next|dist|build)'
 
 # Linter-specific configurations
 
