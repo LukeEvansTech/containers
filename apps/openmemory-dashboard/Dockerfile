@@ -36,7 +36,8 @@ WORKDIR /build/dashboard
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 # Install all dependencies (including devDependencies needed for build)
-RUN npm ci
+# Use npm install instead of npm ci for better compatibility
+RUN npm install --legacy-peer-deps
 RUN npm run build
 
 # Production stage
