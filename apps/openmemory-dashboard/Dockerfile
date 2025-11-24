@@ -35,6 +35,9 @@ WORKDIR /build/dashboard
 # Set Next.js public env vars for build time
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
+# Create next.config.js to enable standalone output and avoid TypeScript at runtime
+RUN echo 'module.exports = { output: "standalone" }' > next.config.js && rm -f next.config.ts
+
 # Install all dependencies (including devDependencies needed for build)
 # Use npm install instead of npm ci for better compatibility
 RUN npm install --legacy-peer-deps
@@ -53,18 +56,10 @@ RUN addgroup -g 1001 -S appuser && \
 
 WORKDIR /app
 
-# Copy all necessary files for Next.js production
-COPY --from=builder --chown=appuser:appuser /build/dashboard/.next ./.next
+# Copy standalone build output (includes all dependencies)
+COPY --from=builder --chown=appuser:appuser /build/dashboard/.next/standalone ./
+COPY --from=builder --chown=appuser:appuser /build/dashboard/.next/static ./.next/static
 COPY --from=builder --chown=appuser:appuser /build/dashboard/public ./public
-COPY --from=builder --chown=appuser:appuser /build/dashboard/package.json ./package.json
-COPY --from=builder --chown=appuser:appuser /build/dashboard/package-lock.json ./package-lock.json
-
-# Create a minimal next.config.js to prevent TypeScript loading
-RUN echo 'module.exports = {}' > next.config.js
-
-# Install production dependencies only
-RUN npm ci --omit=dev && \
-    chown -R appuser:appuser /app
 
 USER appuser
 
@@ -77,4 +72,4 @@ ENV HOSTNAME="0.0.0.0"
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 || r.statusCode === 307 || r.statusCode === 404 ? 0 : 1)})"
 
-CMD ["npm", "start"]
+CMD ["node", "dashboard/server.js"]
