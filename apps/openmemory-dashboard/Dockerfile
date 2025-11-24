@@ -35,7 +35,8 @@ WORKDIR /build/dashboard
 # Set Next.js public env vars for build time
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
-RUN npm ci --only=production --ignore-scripts
+# Install all dependencies (including devDependencies needed for build)
+RUN npm ci
 RUN npm run build
 
 # Production stage
@@ -59,7 +60,7 @@ COPY --from=builder --chown=appuser:appuser /build/dashboard/package-lock.json .
 COPY --from=builder --chown=appuser:appuser /build/dashboard/next.config.ts ./next.config.ts
 
 # Install production dependencies only
-RUN npm ci --only=production && \
+RUN npm ci --omit=dev && \
     chown -R appuser:appuser /app
 
 USER appuser
