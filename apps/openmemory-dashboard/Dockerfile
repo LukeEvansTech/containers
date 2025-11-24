@@ -46,6 +46,14 @@ RUN echo 'module.exports = { output: "standalone" }' > next.config.js && rm -f n
 RUN npm install --legacy-peer-deps
 RUN npm run build
 
+# Debug: Verify standalone output was created
+RUN echo "=== Checking standalone output ===" && \
+    ls -la .next/ && \
+    echo "=== Standalone directory ===" && \
+    ls -la .next/standalone/ || echo "NO STANDALONE OUTPUT FOUND!" && \
+    echo "=== Server.js location ===" && \
+    find .next/standalone -name "server.js" || echo "NO server.js FOUND!"
+
 # Production stage
 FROM node:20-alpine
 
