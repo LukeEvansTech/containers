@@ -60,9 +60,8 @@ COPY --from=builder --chown=appuser:appuser /build/dashboard/public ./public
 COPY --from=builder --chown=appuser:appuser /build/dashboard/package*.json ./
 COPY --from=builder --chown=appuser:appuser /build/dashboard/next.config.* ./
 
-# Install production dependencies including TypeScript
-RUN npm ci --omit=dev && \
-    npm install typescript && \
+# Install all dependencies (including TypeScript)
+RUN npm ci && \
     chown -R appuser:appuser /app
 
 USER appuser
