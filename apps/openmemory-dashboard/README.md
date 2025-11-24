@@ -18,15 +18,23 @@ This container provides the web dashboard interface for OpenMemory, allowing you
 - **License**: Apache-2.0
 - **Port**: 3000
 
-## Environment Variables
+## Build Arguments
+
+| Argument | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `OPENMEMORY_VERSION` | OpenMemory version to build | `1.2.1` | `1.2.1` |
+| `NEXT_PUBLIC_API_URL` | URL to OpenMemory backend API (baked at build time) | `http://openmemory.ai.svc.cluster.local:8080` | `http://your-backend:8080` |
+
+## Environment Variables (Runtime)
 
 | Variable | Description | Required | Example |
 |----------|-------------|----------|---------|
-| `NEXT_PUBLIC_API_URL` | URL to OpenMemory backend API | Yes | `https://openmemory.codelooks.com` |
 | `NEXT_PUBLIC_API_KEY` | API key for backend authentication | Yes (if backend has auth enabled) | `your-api-key-here` |
 | `NODE_ENV` | Node environment | No | `production` (default) |
 | `PORT` | Port to listen on | No | `3000` (default) |
 | `HOSTNAME` | Hostname to bind to | No | `0.0.0.0` (default) |
+
+**Note**: The `NEXT_PUBLIC_API_URL` is set at build time and defaults to the internal Kubernetes cluster DNS (`http://openmemory.ai.svc.cluster.local:8080`). This keeps the backend domain private and prevents it from being exposed to browsers.
 
 ## Usage
 

@@ -1,9 +1,11 @@
 # syntax=docker/dockerfile:1
 ARG OPENMEMORY_VERSION=1.2.1
+ARG NEXT_PUBLIC_API_URL=http://openmemory.ai.svc.cluster.local:8080
 
 FROM node:20-alpine AS builder
 
 ARG OPENMEMORY_VERSION
+ARG NEXT_PUBLIC_API_URL
 
 LABEL org.opencontainers.image.source="https://github.com/LukeEvansTech/containers"
 LABEL org.opencontainers.image.description="OpenMemory Dashboard - Web UI for OpenMemory"
@@ -29,6 +31,10 @@ RUN git clone --depth 1 --branch ${OPENMEMORY_VERSION} https://github.com/Cavira
 
 # Install dependencies and build dashboard
 WORKDIR /build/dashboard
+
+# Set Next.js public env vars for build time
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
 RUN npm ci --only=production --ignore-scripts
 RUN npm run build
 
