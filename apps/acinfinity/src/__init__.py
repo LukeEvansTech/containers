@@ -1,1 +1,0 @@
-# AC Infinity Prometheus Exporter
