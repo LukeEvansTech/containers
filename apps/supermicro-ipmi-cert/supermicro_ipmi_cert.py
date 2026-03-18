@@ -141,17 +141,12 @@ class RedfishIPMIUpdater:
                 + b"\n"
             )
 
-        # For Redfish, only send the server certificate, not the full chain
-        substr = b"-----END CERTIFICATE-----\n"
-        cert_only = cert_data.split(substr)[0] + substr
-
-        print(f"DEBUG: Certificate data length: {len(cert_data)} bytes")
-        print(f"DEBUG: Server cert only length: {len(cert_only)} bytes")
+        print(f"DEBUG: Certificate chain length: {len(cert_data)} bytes")
         print(f"DEBUG: Key data length: {len(key_data)} bytes")
 
         # Use dict format for multipart file upload
         files_to_upload = {
-            "cert_file": ("cert.pem", cert_only, "application/octet-stream"),
+            "cert_file": ("cert.pem", cert_data, "application/octet-stream"),
             "key_file": ("key.pem", key_data, "application/octet-stream"),
         }
 
