@@ -52,4 +52,7 @@ RUN kubectl version --client && \
     python3 -c "import sys; print(f'Python {sys.version}')"
 
 # Default command
+# CLI tool — runs to completion, no long-running service to health-check.
+HEALTHCHECK NONE
+
 CMD ["/bin/sh"]

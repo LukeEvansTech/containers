@@ -48,4 +48,7 @@ WORKDIR /app
 RUN kubectl version --client && \
     python3 -c "import requests; import OpenSSL; print(f'Python packages OK')"
 
+# CLI tool — runs to completion, no long-running service to health-check.
+HEALTHCHECK NONE
+
 ENTRYPOINT ["python3", "/app/supermicro_ipmi_cert.py"]
