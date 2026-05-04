@@ -6,15 +6,15 @@ on:
     branches:
       - main
     paths:
-      - 'apps/**'
-      - '.github/workflows/build-and-push.yaml'
+      - "apps/**"
+      - ".github/workflows/build-and-push.yaml"
   pull_request:
     paths:
-      - 'apps/**'
+      - "apps/**"
   workflow_dispatch:
     inputs:
       app:
-        description: 'App to build (leave empty for all changed apps)'
+        description: "App to build (leave empty for all changed apps)"
         required: false
         type: string
 
