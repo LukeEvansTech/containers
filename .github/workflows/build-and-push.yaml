@@ -35,6 +35,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Detect changed apps
         id: changed-files
@@ -47,21 +48,27 @@ jobs:
       - name: Set matrix
         id: set-matrix
         run: |
-          if [ -n "${{ inputs.app }}" ]; then
+          if [ -n "${INPUTS_APP}" ]; then
             # Manual trigger with specific app
-            echo "apps=[\"${{ inputs.app }}\"]" >> $GITHUB_OUTPUT
-          elif [ "${{ steps.changed-files.outputs.any_changed }}" == "true" ]; then
+            echo "apps=[\"${INPUTS_APP}\"]" >> $GITHUB_OUTPUT
+          elif [ "${STEPS_CHANGED_FILES_OUTPUTS_ANY_CHANGED}" == "true" ]; then
             # Auto-detect changed apps
-            APPS=$(echo '${{ steps.changed-files.outputs.all_changed_files }}' | jq -R -s -c 'split(" ") | map(select(length > 0)) | map(split("/")[1]) | unique')
+            APPS=$(echo '${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}' | jq -R -s -c 'split(" ") | map(select(length > 0)) | map(split("/")[1]) | unique')
             echo "apps=${APPS}" >> $GITHUB_OUTPUT
           else
             # No changes
             echo "apps=[]" >> $GITHUB_OUTPUT
           fi
+        env:
+          INPUTS_APP: ${{ inputs.app }}
+          STEPS_CHANGED_FILES_OUTPUTS_ANY_CHANGED: ${{ steps.changed-files.outputs.any_changed }}
+          STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
 
       - name: Show apps to build
         run: |
-          echo "Apps to build: ${{ steps.set-matrix.outputs.apps }}"
+          echo "Apps to build: ${STEPS_SET_MATRIX_OUTPUTS_APPS}"
+        env:
+          STEPS_SET_MATRIX_OUTPUTS_APPS: ${{ steps.set-matrix.outputs.apps }}
 
   build:
     name: Build ${{ matrix.app }}
@@ -80,6 +87,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -97,14 +106,14 @@ jobs:
       - name: Read VERSION file and prepare build args
         id: version
         run: |
-          if [ -f "apps/${{ matrix.app }}/VERSION" ]; then
-            VERSION=$(cat apps/${{ matrix.app }}/VERSION)
+          if [ -f "apps/${MATRIX_APP}/VERSION" ]; then
+            VERSION=$(cat apps/${MATRIX_APP}/VERSION)
             echo "version=$VERSION" >> $GITHUB_OUTPUT
             echo "has_version=true" >> $GITHUB_OUTPUT
             echo "Found VERSION file with version: $VERSION"
 
             # Create build arg with uppercase app name
-            APP_UPPER=$(echo "${{ matrix.app }}" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+            APP_UPPER=$(echo "${MATRIX_APP}" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
             BUILD_ARG="${APP_UPPER}_VERSION=${VERSION}"
             echo "build_arg=$BUILD_ARG" >> $GITHUB_OUTPUT
             echo "Build arg: $BUILD_ARG"
@@ -116,6 +125,8 @@ jobs:
 
           # Always add CACHEBUST to force rebuild when needed
           echo "cachebust=${{ github.sha }}" >> $GITHUB_OUTPUT
+        env:
+          MATRIX_APP: ${{ matrix.app }}
 
       - name: Extract metadata
         id: meta
@@ -152,15 +163,19 @@ jobs:
 
       - name: Summary
         run: |
-          echo "## Built: ${{ matrix.app }}" >> $GITHUB_STEP_SUMMARY
+          echo "## Built: ${MATRIX_APP}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Image**: \`${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.app }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Digest**: \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Image**: \`${{ env.REGISTRY }}/${{ github.repository_owner }}/${MATRIX_APP}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Digest**: \`${STEPS_BUILD_OUTPUTS_DIGEST}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Tags" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "${STEPS_META_OUTPUTS_TAGS}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        env:
+          MATRIX_APP: ${{ matrix.app }}
+          STEPS_BUILD_OUTPUTS_DIGEST: ${{ steps.build.outputs.digest }}
+          STEPS_META_OUTPUTS_TAGS: ${{ steps.meta.outputs.tags }}
 
   status:
     name: Build Status
