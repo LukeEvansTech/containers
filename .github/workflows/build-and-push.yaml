@@ -48,8 +48,11 @@ jobs:
             # Manual trigger with specific app
             echo "apps=[\"${{ inputs.app }}\"]" >> $GITHUB_OUTPUT
           elif [ "${{ steps.changed-files.outputs.any_changed }}" == "true" ]; then
-            # Auto-detect changed apps
-            APPS=$(echo '${{ steps.changed-files.outputs.all_changed_files }}' | jq -R -s -c 'split(" ") | map(select(length > 0)) | map(split("/")[1]) | unique')
+            # Auto-detect changed apps. scan("\\S+") tokenises on ANY whitespace and drops the
+            # trailing newline from the slurped output — `split(" ")` left a trailing \n on the last
+            # app name (e.g. "logstash-sentinel\n"), which broke the per-app VERSION lookup and the
+            # version image tag (only `latest`/`main-<sha>` got pushed, never `:<version>`).
+            APPS=$(echo '${{ steps.changed-files.outputs.all_changed_files }}' | jq -R -s -c '[scan("\\S+") | split("/")[1]] | unique')
             echo "apps=${APPS}" >> $GITHUB_OUTPUT
           else
             # No changes
