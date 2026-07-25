@@ -1,4 +1,4 @@
-FROM python:3.12-alpine AS builder
+FROM python:3.14-alpine@sha256:26730869004e2b9c4b9ad09cab8625e81d256d1ce97e72df5520e806b1709f92 AS builder
 
 ARG KUBECTL_VERSION=v1.32.0
 ARG TARGETARCH=amd64
@@ -10,7 +10,7 @@ RUN wget -q -O kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/$
     chmod +x kubectl
 
 # Final runtime image
-FROM python:3.12-alpine
+FROM python:3.14-alpine@sha256:26730869004e2b9c4b9ad09cab8625e81d256d1ce97e72df5520e806b1709f92
 
 LABEL org.opencontainers.image.source="https://github.com/LukeEvansTech/containers"
 LABEL org.opencontainers.image.description="NVIDIA Onyx Switch Certificate Deployment Tool for Cert Warden"
