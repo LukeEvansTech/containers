@@ -1,4 +1,4 @@
-FROM alpine:3.22 AS builder
+FROM alpine:3.22@sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce AS builder
 
 ARG KUBECTL_VERSION=v1.32.0
 ARG BROTHER_CERT_VERSION=v0.3.0
@@ -16,7 +16,7 @@ RUN wget -q "https://github.com/gregtwallace/brother-cert/releases/download/${BR
     chmod +x brother-cert
 
 # Final runtime image
-FROM alpine:3.22
+FROM alpine:3.22@sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce
 
 LABEL org.opencontainers.image.source="https://github.com/LukeEvansTech/containers"
 LABEL org.opencontainers.image.description="Brother Printer Certificate Deployment Tool for Cert Warden"
