@@ -124,7 +124,14 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.app }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,prefix={{branch}}-
+            # {{branch}} resolves EMPTY on pull_request events, so this produced the
+            # tag "-<sha>" (e.g. "brother-deployer:-bc366df"), which docker rejects:
+            # 'invalid tag ... invalid reference format'. Every app's build failed on
+            # every PR, so no Renovate PR in this repo could ever go green.
+            # Gated to non-PR events only. PRs still get a valid tag from
+            # type=ref,event=pr below, and push is false on PRs anyway, so the tag is
+            # only used for the local build. Pushed tags on main are unchanged.
+            type=sha,prefix={{branch}}-,enable=${{ github.event_name != 'pull_request' }}
             type=ref,event=pr
             type=raw,value=${{ steps.version.outputs.version }},enable=${{ steps.version.outputs.has_version == 'true' }}
 
