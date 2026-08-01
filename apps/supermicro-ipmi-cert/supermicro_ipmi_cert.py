@@ -16,11 +16,18 @@ import json
 import logging
 import os
 import re
+import ssl
+import time
 from datetime import datetime
+from urllib.parse import urlparse
 
 import requests
 
 REQUEST_TIMEOUT = 30.0
+# The SmcSSLCert.Upload action can take well over 30s on some BMC generations
+# (H12/X12 observed): the BMC validates and stores the key material before
+# responding, and may bounce its web backend as part of it.
+UPLOAD_TIMEOUT = 180.0
 
 
 class RedfishIPMIUpdater:
@@ -163,7 +170,7 @@ class RedfishIPMIUpdater:
                 self.upload_cert_url,
                 files=files_to_upload,
                 headers=request_headers,
-                timeout=REQUEST_TIMEOUT,
+                timeout=UPLOAD_TIMEOUT,
                 verify=False,
             )
         except Exception as e:
@@ -190,11 +197,20 @@ class RedfishIPMIUpdater:
         :param token: X-Auth-Token from login
         :return: bool
         """
-        request_headers = {"X-Auth-Token": token}
+        request_headers = {"Content-Type": "application/json", "X-Auth-Token": token}
+
+        # An empty POST body is accepted by some firmware but silently ignored by
+        # others (seen on H12/X12: HTTP 200, no actual restart), which leaves the
+        # old certificate being served. Always name the reset type.
+        reboot_data = {"ResetType": "GracefulRestart"}
 
         try:
             result = self.session.post(
-                self.reboot_url, headers=request_headers, timeout=REQUEST_TIMEOUT, verify=False
+                self.reboot_url,
+                data=json.dumps(reboot_data),
+                headers=request_headers,
+                timeout=REQUEST_TIMEOUT,
+                verify=False,
             )
         except Exception as e:
             print(f"ERROR: Reboot error: {e}")
@@ -214,6 +230,38 @@ def parse_valid_until(pem_file):
     with open(pem_file, "rb") as fh:
         cert = c.load_certificate(c.FILETYPE_PEM, fh.read())
     return datetime.strptime(cert.get_notAfter().decode("utf8"), "%Y%m%d%H%M%SZ")
+
+
+def cert_fingerprint(pem_data):
+    """SHA-256 fingerprint of the first (leaf) certificate in a PEM blob"""
+    from OpenSSL import crypto as c
+
+    cert = c.load_certificate(c.FILETYPE_PEM, pem_data)
+    return cert.digest("sha256").decode("utf8")
+
+
+def get_served_fingerprint(host, port=443):
+    """Fingerprint of the certificate the host is actually serving on its TLS port"""
+    pem = ssl.get_server_certificate((host, port), timeout=REQUEST_TIMEOUT)
+    return cert_fingerprint(pem.encode("utf8"))
+
+
+def wait_for_served_cert(host, expected_fingerprint, timeout_seconds=240, interval=10):
+    """
+    Poll host:443 until the served certificate matches the expected fingerprint.
+    The IPMI drops TLS entirely while rebooting, so connection errors are expected.
+    :return: bool
+    """
+    deadline = time.time() + timeout_seconds
+    while time.time() < deadline:
+        try:
+            if get_served_fingerprint(host) == expected_fingerprint:
+                return True
+            print("DEBUG: Served certificate does not match uploaded certificate yet")
+        except Exception as e:
+            print(f"DEBUG: TLS probe failed ({e}), IPMI likely still rebooting")
+        time.sleep(interval)
+    return False
 
 
 def main():
@@ -315,39 +363,75 @@ def main():
 
     # Check if update is needed
     new_valid_until = parse_valid_until(args.cert_file)
+    with open(args.cert_file, "rb") as fh:
+        new_fingerprint = cert_fingerprint(fh.read())
+    ipmi_host = urlparse(args.ipmi_url).hostname
+
+    needs_upload = True
     if current_valid_until == new_valid_until:
-        if not args.force_update:
-            print("New cert validity period matches existing cert, nothing to do")
-            exit(0)
-        else:
+        if args.force_update:
             print("New cert validity period matches existing cert, will update regardless")
+        else:
+            # A matching stored certificate does not prove it is being served: an
+            # earlier upload whose reboot never took effect leaves the old
+            # certificate live. Only the socket is authoritative.
+            try:
+                served_matches = get_served_fingerprint(ipmi_host) == new_fingerprint
+            except Exception as e:
+                print(f"WARNING: Could not read served certificate: {e}")
+                served_matches = False
+            if served_matches:
+                print("New cert matches existing cert and it is being served, nothing to do")
+                exit(0)
+            print("Stored certificate is current but the served certificate is stale!")
+            print("Skipping upload, rebooting IPMI to apply the stored certificate")
+            needs_upload = False
 
     # Upload certificate
-    if not updater.upload_cert(args.key_file, args.cert_file, token):
-        print("ERROR: Failed to upload certificate to IPMI!")
-        exit(2)
+    if needs_upload:
+        if not updater.upload_cert(args.key_file, args.cert_file, token):
+            print("ERROR: Failed to upload certificate to IPMI!")
+            exit(2)
 
-    if not args.quiet:
-        print("Uploaded files ok.")
-
-    # Verify upload
-    cert_info = updater.get_ipmi_cert_info(token)
-    if not cert_info:
-        print("ERROR: Failed to verify certificate after upload!")
-        exit(2)
-
-    if not args.quiet and cert_info["has_cert"]:
-        print(f"After upload, certificate is valid until: {cert_info['valid_until']}")
-
-    # Reboot if requested
-    if not args.no_reboot:
         if not args.quiet:
-            print("Rebooting IPMI to apply changes...")
-        if not updater.reboot_ipmi(token):
-            print("WARNING: Reboot failed! Manual reboot may be required.")
-    else:
+            print("Uploaded files ok.")
+
+        # Verify the IPMI now reports the uploaded certificate
+        cert_info = updater.get_ipmi_cert_info(token)
+        if not cert_info:
+            print("ERROR: Failed to verify certificate after upload!")
+            exit(2)
+
+        if not args.quiet and cert_info["has_cert"]:
+            print(f"After upload, certificate is valid until: {cert_info['valid_until']}")
+
+        if cert_info.get("valid_until") != new_valid_until:
+            print("ERROR: IPMI does not report the uploaded certificate after upload!")
+            exit(2)
+
+    # Reboot to apply
+    if args.no_reboot:
         if not args.quiet:
             print("Skipping reboot (manual reboot required)")
+            print("NOTE: the new certificate is NOT served until the IPMI reboots")
+    else:
+        if not args.quiet:
+            print("Rebooting IPMI to apply changes...")
+        # An uploaded-but-unapplied certificate looks like success everywhere
+        # except the socket, so a failed reboot is a deployment failure - exit
+        # non-zero so the caller (Cert Warden post processing) records it and
+        # the deployment can be retried.
+        if not updater.reboot_ipmi(token):
+            print("ERROR: IPMI reboot failed - uploaded certificate is not being served!")
+            exit(2)
+
+        if not args.quiet:
+            print("Waiting for IPMI to come back serving the new certificate...")
+        if not wait_for_served_cert(ipmi_host, new_fingerprint):
+            print("ERROR: IPMI did not serve the uploaded certificate after reboot!")
+            exit(2)
+        if not args.quiet:
+            print("Verified: IPMI is serving the uploaded certificate")
 
     if not args.quiet:
         print("All done!")
