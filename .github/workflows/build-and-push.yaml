@@ -57,7 +57,10 @@ jobs:
             # trailing newline from the slurped output — `split(" ")` left a trailing \n on the last
             # app name (e.g. "logstash-sentinel\n"), which broke the per-app VERSION lookup and the
             # version image tag (only `latest`/`main-<sha>` got pushed, never `:<version>`).
-            APPS=$(echo "${ALL_CHANGED_FILES}" | jq -R -s -c '[scan("\\S+") | split("/")[1]] | unique')
+            # select(test(...)) allowlists app names to [A-Za-z0-9_-] so nothing
+            # path-like or shell-meta can ever reach the build matrix (defence in
+            # depth for the matrix.app interpolations downstream).
+            APPS=$(echo "${ALL_CHANGED_FILES}" | jq -R -s -c '[scan("\\S+") | split("/")[1] | select(test("^[A-Za-z0-9_-]+$"))] | unique')
             echo "apps=${APPS}" >> "$GITHUB_OUTPUT"
           else
             # No changes
@@ -154,7 +157,11 @@ jobs:
         id: build
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
-          context: ./apps/${{ matrix.app }}
+          # matrix.app is allowlist-filtered to [A-Za-z0-9_-] in Set matrix, and
+          # build-push-action passes context via exec arg arrays (no shell). A
+          # fork PR could edit the Dockerfile being built anyway, so template
+          # expansion here adds no attacker capability.
+          context: ./apps/${{ matrix.app }} # zizmor: ignore[template-injection]
           platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
