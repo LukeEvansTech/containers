@@ -44,5 +44,8 @@ WORKDIR /app
 RUN kubectl version --client && \
     brother-cert --version || echo "brother-cert installed"
 
+# CLI tool — runs to completion, no long-running service to health-check.
+HEALTHCHECK NONE
+
 # Default command
 CMD ["/bin/sh"]

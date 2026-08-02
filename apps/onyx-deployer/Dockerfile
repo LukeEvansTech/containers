@@ -49,4 +49,7 @@ RUN kubectl version --client && \
     python3 -c "import urllib.request; print('Python stdlib OK')" && \
     python3 -c "import OpenSSL; print('pyOpenSSL OK')"
 
+# CLI tool — runs to completion, no long-running service to health-check.
+HEALTHCHECK NONE
+
 ENTRYPOINT ["python3", "/app/onyx_cert_updater.py"]

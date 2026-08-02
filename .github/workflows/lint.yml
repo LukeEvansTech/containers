@@ -1,0 +1,24 @@
+---
+name: Lint
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lint:
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: write
+    uses: LukeEvansTech/shared-workflows/.github/workflows/super-linter.yml@3771e1f9da1b3f6132eec9d63aacc0acb74660bc # v1
+    with:
+      # Blocking from day one, not soft-launch: Renovate self-gates on this
+      # repo's statuses (ignoreTests: false), and with soft-launch the per-linter
+      # commit statuses can fail while the visible lint job stays green —
+      # silently wedging every Renovate PR. Findings were fixed in the PR that
+      # introduced this workflow (verified locally with hadolint/actionlint/zizmor),
+      # so there is nothing to soft-launch around.
+      soft-launch: false

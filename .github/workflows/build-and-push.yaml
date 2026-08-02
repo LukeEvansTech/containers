@@ -6,20 +6,24 @@ on:
     branches:
       - main
     paths:
-      - 'apps/**'
-      - '.github/workflows/build-and-push.yaml'
+      - "apps/**"
+      - ".github/workflows/build-and-push.yaml"
   pull_request:
     paths:
-      - 'apps/**'
+      - "apps/**"
   workflow_dispatch:
     inputs:
       app:
-        description: 'App to build (leave empty for all changed apps)'
+        description: "App to build (leave empty for all changed apps)"
         required: false
         type: string
 
 env:
   REGISTRY: ghcr.io
+
+# Read-only by default; the build job elevates its own scopes below.
+permissions:
+  contents: read
 
 jobs:
   detect-changes:
@@ -32,6 +36,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Detect changed apps
         id: changed-files
@@ -44,24 +49,33 @@ jobs:
       - name: Set matrix
         id: set-matrix
         run: |
-          if [ -n "${{ inputs.app }}" ]; then
+          if [ -n "${INPUT_APP}" ]; then
             # Manual trigger with specific app
-            echo "apps=[\"${{ inputs.app }}\"]" >> $GITHUB_OUTPUT
-          elif [ "${{ steps.changed-files.outputs.any_changed }}" == "true" ]; then
+            echo "apps=[\"${INPUT_APP}\"]" >> "$GITHUB_OUTPUT"
+          elif [ "${ANY_CHANGED}" == "true" ]; then
             # Auto-detect changed apps. scan("\\S+") tokenises on ANY whitespace and drops the
             # trailing newline from the slurped output — `split(" ")` left a trailing \n on the last
             # app name (e.g. "logstash-sentinel\n"), which broke the per-app VERSION lookup and the
             # version image tag (only `latest`/`main-<sha>` got pushed, never `:<version>`).
-            APPS=$(echo '${{ steps.changed-files.outputs.all_changed_files }}' | jq -R -s -c '[scan("\\S+") | split("/")[1]] | unique')
-            echo "apps=${APPS}" >> $GITHUB_OUTPUT
+            # select(test(...)) allowlists app names to [A-Za-z0-9_-] so nothing
+            # path-like or shell-meta can ever reach the build matrix (defence in
+            # depth for the matrix.app interpolations downstream).
+            APPS=$(echo "${ALL_CHANGED_FILES}" | jq -R -s -c '[scan("\\S+") | split("/")[1] | select(test("^[A-Za-z0-9_-]+$"))] | unique')
+            echo "apps=${APPS}" >> "$GITHUB_OUTPUT"
           else
             # No changes
-            echo "apps=[]" >> $GITHUB_OUTPUT
+            echo "apps=[]" >> "$GITHUB_OUTPUT"
           fi
+        env:
+          INPUT_APP: ${{ inputs.app }}
+          ANY_CHANGED: ${{ steps.changed-files.outputs.any_changed }}
+          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
 
       - name: Show apps to build
         run: |
-          echo "Apps to build: ${{ steps.set-matrix.outputs.apps }}"
+          echo "Apps to build: ${APPS}"
+        env:
+          APPS: ${{ steps.set-matrix.outputs.apps }}
 
   build:
     name: Build ${{ matrix.app }}
@@ -80,6 +94,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
@@ -97,25 +113,27 @@ jobs:
       - name: Read VERSION file and prepare build args
         id: version
         run: |
-          if [ -f "apps/${{ matrix.app }}/VERSION" ]; then
-            VERSION=$(cat apps/${{ matrix.app }}/VERSION)
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-            echo "has_version=true" >> $GITHUB_OUTPUT
+          if [ -f "apps/${MATRIX_APP}/VERSION" ]; then
+            VERSION=$(cat "apps/${MATRIX_APP}/VERSION")
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "has_version=true" >> "$GITHUB_OUTPUT"
             echo "Found VERSION file with version: $VERSION"
 
             # Create build arg with uppercase app name
-            APP_UPPER=$(echo "${{ matrix.app }}" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+            APP_UPPER=$(echo "${MATRIX_APP}" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
             BUILD_ARG="${APP_UPPER}_VERSION=${VERSION}"
-            echo "build_arg=$BUILD_ARG" >> $GITHUB_OUTPUT
+            echo "build_arg=$BUILD_ARG" >> "$GITHUB_OUTPUT"
             echo "Build arg: $BUILD_ARG"
           else
-            echo "has_version=false" >> $GITHUB_OUTPUT
-            echo "build_arg=" >> $GITHUB_OUTPUT
+            echo "has_version=false" >> "$GITHUB_OUTPUT"
+            echo "build_arg=" >> "$GITHUB_OUTPUT"
             echo "No VERSION file found"
           fi
 
           # Always add CACHEBUST to force rebuild when needed
-          echo "cachebust=${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "cachebust=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+        env:
+          MATRIX_APP: ${{ matrix.app }}
 
       - name: Extract metadata
         id: meta
@@ -139,7 +157,11 @@ jobs:
         id: build
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
-          context: ./apps/${{ matrix.app }}
+          # matrix.app is allowlist-filtered to [A-Za-z0-9_-] in Set matrix, and
+          # build-push-action passes context via exec arg arrays (no shell). A
+          # fork PR could edit the Dockerfile being built anyway, so template
+          # expansion here adds no attacker capability.
+          context: ./apps/${{ matrix.app }} # zizmor: ignore[template-injection]
           platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
@@ -159,15 +181,21 @@ jobs:
 
       - name: Summary
         run: |
-          echo "## Built: ${{ matrix.app }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Image**: \`${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.app }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Digest**: \`${{ steps.build.outputs.digest }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Tags" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Built: ${MATRIX_APP}"
+            echo ""
+            echo "**Image**: \`${REGISTRY}/${GITHUB_REPOSITORY_OWNER}/${MATRIX_APP}\`"
+            echo "**Digest**: \`${DIGEST}\`"
+            echo ""
+            echo "### Tags"
+            echo '```'
+            echo "${TAGS}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          MATRIX_APP: ${{ matrix.app }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
 
   status:
     name: Build Status
@@ -177,11 +205,13 @@ jobs:
     steps:
       - name: Check build status
         run: |
-          if [ "${{ needs.build.result }}" == "failure" ]; then
+          if [ "${BUILD_RESULT}" == "failure" ]; then
             echo "❌ Some builds failed"
             exit 1
-          elif [ "${{ needs.build.result }}" == "skipped" ]; then
+          elif [ "${BUILD_RESULT}" == "skipped" ]; then
             echo "⏭️ No apps to build"
           else
             echo "✅ All builds succeeded"
           fi
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
