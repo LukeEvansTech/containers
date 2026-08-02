@@ -1,0 +1,14 @@
+---
+# Hadolint config for super-linter (read from LINTER_RULES_PATH, .github/linters).
+# Suppressions carried over from the retired MegaLinter config — deliberate,
+# not cleanup debt:
+ignored:
+  # hadolint: ignore[DL3018] — pinning apk add versions is impractical here:
+  # Alpine drops old package versions from the index on every base-image
+  # rebase, so pins break rebuilds without supply-chain benefit (the base
+  # images themselves are pinned and Renovate-managed).
+  - DL3018
+  # hadolint: ignore[DL3066] (info) — `USER nobody` is the house pattern for
+  # Alpine images (numeric 1000:1000 elsewhere). The Dockerfiles chown to
+  # nobody:nobody explicitly, so the named user always resolves in-image.
+  - DL3066
