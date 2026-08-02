@@ -51,5 +51,8 @@ RUN kubectl version --client && \
     apc-p15-tool version || echo "apc-p15-tool installed" && \
     python3 -c "import sys; print(f'Python {sys.version}')"
 
+# CLI tool — runs to completion, no long-running service to health-check.
+HEALTHCHECK NONE
+
 # Default command
 CMD ["/bin/sh"]
