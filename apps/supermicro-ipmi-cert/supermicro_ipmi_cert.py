@@ -148,7 +148,17 @@ class RedfishIPMIUpdater:
                 + b"\n"
             )
 
-        # For Redfish, only send the server certificate, not the full chain
+        # Leaf only - a FIRMWARE constraint, not a choice (do not "fix" this).
+        # Tested live on H13 fw 01.05.09 (2026-08-02): SmcSSLCert.Upload
+        # returns 400 GeneralError for any multi-cert PEM (4-cert bundle AND
+        # a minimal leaf+intermediate), and the standard Redfish
+        # CertificateService.ReplaceCertificate only pairs with its own
+        # GenerateCSR flow ("Certificate did not match newly generated
+        # private key") so it cannot install an externally keyed cert either.
+        # Consequence: these BMCs always serve a chainless leaf - browsers
+        # repair that via AIA fetching, but strict TLS clients fail with
+        # "unknown authority", so monitoring must probe them without chain
+        # verification.
         substr = b"-----END CERTIFICATE-----\n"
         cert_only = cert_data.split(substr)[0] + substr
 
