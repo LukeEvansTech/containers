@@ -13,7 +13,14 @@ deployment to various hardware devices, designed to work with
 
 | Container | Description | Architectures |
 |-----------|-------------|---------------|
-| [supermicro-ipmi-cert](./apps/supermicro-ipmi-cert) | Deploy certificates to Supermicro IPMI interfaces (X9, X10, X11, X12, X13, H13) | `linux/amd64`, `linux/arm64` |
+| [apc-deployer](./apps/apc-deployer) | Deploy certificates to APC Network Management Cards via SSH ([apc-p15-tool](https://github.com/gregtwallace/apc-p15-tool)) | `linux/amd64` |
+| [brother-deployer](./apps/brother-deployer) | Deploy certificates to Brother network printers ([brother-cert](https://github.com/gregtwallace/brother-cert)) | `linux/amd64` |
+| [logstash-sentinel](./apps/logstash-sentinel) | Logstash with the Microsoft Sentinel output plugin baked in | `linux/amd64` |
+| [onyx-deployer](./apps/onyx-deployer) | Deploy certificates to NVIDIA Onyx switches via the JSON API | `linux/amd64` |
+
+> **Moved:** `supermicro-ipmi-cert` graduated to its own repository on 2026-08-02 —
+> [LukeEvansTech/supermicro-ipmi-cert](https://github.com/LukeEvansTech/supermicro-ipmi-cert).
+> The published image path (`ghcr.io/lukeevanstech/supermicro-ipmi-cert`) is unchanged.
 
 ## Mission Statement
 
@@ -57,9 +64,9 @@ environment_variables:
 Each container can be built individually:
 
 ```bash
-cd apps/supermicro-ipmi-cert
-docker build -t ghcr.io/lukevanstech/supermicro-ipmi-cert:latest .
-docker push ghcr.io/lukevanstech/supermicro-ipmi-cert:latest
+cd apps/apc-deployer
+docker build -t ghcr.io/lukevanstech/apc-deployer:latest .
+docker push ghcr.io/lukevanstech/apc-deployer:latest
 ```
 
 ## Contributing
@@ -75,7 +82,6 @@ Contributions are welcome! If you have additional hardware devices that need cer
 
 - Built on patterns from [home-operations/containers](https://github.com/home-operations/containers)
 - Inspired by [gregtwallace/certwarden](https://github.com/gregtwallace/certwarden) post-processing plugins
-- IPMI update logic adapted from [Jari Turkia's ipmi-updater.py](https://github.com/jturkia/supermicro-ipmi-updater)
 
 ## License
 
