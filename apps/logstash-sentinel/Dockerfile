@@ -1,4 +1,4 @@
-FROM docker.elastic.co/logstash/logstash:9.5.1@sha256:1e1bc5efbe6b29047e6054cfd938407981dbd522708e934dd050ba7967703a44
+FROM docker.elastic.co/logstash/logstash:9.5.2@sha256:4a49af2d3798aeccc88cf02935af3c71535bff8d9d0d5e9fc1205d92dc837bc4
 
 LABEL org.opencontainers.image.source="https://github.com/LukeEvansTech/containers"
 LABEL org.opencontainers.image.description="Logstash with the Microsoft Sentinel DCR output plugin — OPNsense → Sentinel syslog shipper"
