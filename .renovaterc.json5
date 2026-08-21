@@ -5,4 +5,29 @@
     { matchPackageNames: ["/kubectl/"], groupName: "kubectl" },
     { matchManagers: ["pip_requirements"], groupName: "Python dependencies" },
   ],
+  customManagers: [
+    {
+      // The build workflow publishes the version tag from the VERSION file, while the
+      // ordinary docker manager bumps the Logstash base in the Dockerfile FROM. Track
+      // VERSION as the same dependency so both move in one PR — otherwise the tag lies
+      // about the Logstash inside (9.1.10-tagged images shipped 9.4.x/9.5.x, 2026-08).
+      customType: "regex",
+      managerFilePatterns: ["/^apps/logstash-sentinel/VERSION$/"],
+      matchStrings: ["^(?<currentValue>\\S+)"],
+      depNameTemplate: "docker.elastic.co/logstash/logstash",
+      datasourceTemplate: "docker",
+      versioningTemplate: "docker",
+    },
+    {
+      // The Sentinel output plugin gem is pinned in the Dockerfile RUN line. Untracked,
+      // it rotted to 2.1.0 while the base moved to JRuby 10 (Logstash 9.4+), where 2.1.0
+      // installs but fails to load — the shipper crashlooped on every rebuild.
+      customType: "regex",
+      managerFilePatterns: ["/^apps/logstash-sentinel/Dockerfile$/"],
+      matchStrings: [
+        "logstash-plugin install --version (?<currentValue>\\S+) (?<depName>microsoft-sentinel-log-analytics-logstash-output-plugin)",
+      ],
+      datasourceTemplate: "rubygems",
+    },
+  ],
 }
