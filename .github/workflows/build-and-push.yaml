@@ -155,7 +155,7 @@ jobs:
 
       - name: Build and push
         id: build
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           # matrix.app is allowlist-filtered to [A-Za-z0-9_-] in Set matrix, and
           # build-push-action passes context via exec arg arrays (no shell). A
