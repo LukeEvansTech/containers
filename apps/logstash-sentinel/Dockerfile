@@ -17,7 +17,7 @@ LABEL org.opencontainers.image.licenses="Apache-2.0"
 # 'microsoft-sentinel-log-analytics-logstash-output-plugin'" (a LoadError wearing a not-installed
 # message) — which crashlooped the talos-cluster shipper on every rebuild after the 9.1.10 → 9.4.4
 # base bump. 2.5.0 verified starting cleanly against this exact base image in-cluster.
-RUN logstash-plugin install --version 2.5.0 microsoft-sentinel-log-analytics-logstash-output-plugin
+RUN logstash-plugin install --version 2.5.1 microsoft-sentinel-log-analytics-logstash-output-plugin
 
 # The pipeline (.conf) and logstash.yml are mounted at runtime via ConfigMap from the
 # talos-cluster Flux app (kubernetes/apps/security/sentinel-syslog). No pipeline baked in.
