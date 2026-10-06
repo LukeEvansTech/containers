@@ -1,7 +1,7 @@
 # The published image tag comes from apps/logstash-sentinel/VERSION — a Renovate custom
 # manager keeps it in lockstep with this FROM tag. A stale VERSION ships a tag that lies
 # about the Logstash inside (9.1.10-tagged images carried 9.4.x/9.5.x for four days).
-FROM docker.elastic.co/logstash/logstash:9.5.4@sha256:75a495fa0ce94f44da25b7458bf6bf68bb3e4ecde8cdd00cc4376d78fa64e1e7
+FROM docker.elastic.co/logstash/logstash:9.5.5@sha256:d170c92166492ff82433395734121dcd2c73140038a03e252299384a01c9aae5
 
 LABEL org.opencontainers.image.source="https://github.com/LukeEvansTech/containers"
 LABEL org.opencontainers.image.description="Logstash with the Microsoft Sentinel DCR output plugin — OPNsense → Sentinel syslog shipper"
