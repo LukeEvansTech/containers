@@ -29,6 +29,7 @@ jobs:
   detect-changes:
     name: Detect Changed Apps
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     outputs:
       apps: ${{ steps.set-matrix.outputs.apps }}
     steps:
@@ -80,6 +81,7 @@ jobs:
   build:
     name: Build ${{ matrix.app }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: detect-changes
     if: needs.detect-changes.outputs.apps != '[]'
     strategy:
@@ -200,6 +202,7 @@ jobs:
   status:
     name: Build Status
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: build
     if: always()
     steps:
