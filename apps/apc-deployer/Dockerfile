@@ -1,4 +1,4 @@
-FROM python:3.15-alpine@sha256:0aa144e9ec2ae8fd80dfd94070ef3e432a0df17b6e5e0091dc05323974ce9913 AS builder
+FROM python:3.15-alpine@sha256:20a82dbc2783112ddb91d1534603f802d222a3e63e593cd002eb2ac534e70211 AS builder
 
 ARG KUBECTL_VERSION=v1.32.0
 ARG APC_TOOL_VERSION=v1.3.3
@@ -16,7 +16,7 @@ RUN wget -q "https://github.com/gregtwallace/apc-p15-tool/releases/download/${AP
     chmod +x apc-p15-tool
 
 # Final runtime image
-FROM python:3.15-alpine@sha256:0aa144e9ec2ae8fd80dfd94070ef3e432a0df17b6e5e0091dc05323974ce9913
+FROM python:3.15-alpine@sha256:20a82dbc2783112ddb91d1534603f802d222a3e63e593cd002eb2ac534e70211
 
 LABEL org.opencontainers.image.source="https://github.com/LukeEvansTech/containers"
 LABEL org.opencontainers.image.description="APC NMC Certificate Deployment Tool for Cert Warden"
